@@ -1,2 +1,5 @@
 /*
   Access-Control-Allow-Origin: *
+
+  /export*
+  Access-Control-Allow-Origin: *

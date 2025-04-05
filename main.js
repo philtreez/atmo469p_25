@@ -68,53 +68,44 @@ basePositions.set(sphereGeometry.attributes.position.array);
 // Array zum Speichern der beweglichen Objekte
 const movingObjects = [];
 
-// GLTF‑Loader zum Laden der .glb-Datei
+// GLTF-Loader zum Laden des .glb-Modells
 const loader = new GLTFLoader();
-loader.load('atmo.glb', (gltf) => {
+loader.load('models/your_model.glb', (gltf) => {
   const model = gltf.scene;
-  model.traverse((child) => {
-    if (child.isMesh) {
-      child.material = new THREE.MeshStandardMaterial({
-        color: 0x00ff8c,
-        emissive: 0x00ff00,
-        emissiveIntensity: 0.05,
-        wireframe: true,
-        transparent: true,
-        opacity: 1,
-        side: THREE.DoubleSide,
-        depthWrite: false,
-        roughness: 0.1,
-        metalness: 0.9  
-      }); // Verwende das gleiche Material wie die organische Form
-    }
-  });
-
   scene.add(model);
 
-  // Durchlaufe alle Kinder des Modells – in diesem Fall die 8 Objekte
-  model.children.forEach((child) => {
-    // Optional: Leichte Verschiebung der Startposition
-    child.position.x += (Math.random() - 0.5) * 1.2;
-    child.position.y += (Math.random() - 0.5) * 1.0;
-    child.position.z += (Math.random() - 0.5) * 0.9;
+  // Durchlaufe alle Kinder (rekursiv) und suche nach Mesh-Objekten
+  model.traverse((child) => {
+    if (child.isMesh) {
+      // Speichere die ursprünglichen Vertex-Positionen für die Deformation
+      if (child.geometry && child.geometry.isBufferGeometry) {
+        const basePositions = new Float32Array(child.geometry.attributes.position.array);
+        child.userData.basePositions = basePositions;
+      }
 
-    // Zufällige Geschwindigkeiten für die Position (Bewegungsrichtung)
-    child.userData.velocity = new THREE.Vector3(
-      (Math.random() - 0.5) * 0.01,
-      (Math.random() - 0.5) * 0.02,
-      (Math.random() - 0.5) * 0.02
-    );
+      // Zufällige Anfangsposition etwas versetzt
+      child.position.x += (Math.random() - 0.5) * 2;
+      child.position.y += (Math.random() - 0.5) * 2;
+      child.position.z += (Math.random() - 0.5) * 2;
 
-    // Zufällige Rotationsgeschwindigkeiten
-    child.userData.rotationSpeed = new THREE.Vector3(
-      (Math.random() - 0.5) * 0.02,
-      (Math.random() - 0.5) * 0.01,
-      (Math.random() - 0.5) * 0.02
-    );
+      // Zufällige Geschwindigkeiten für Bewegung
+      child.userData.velocity = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.05,
+        (Math.random() - 0.5) * 0.05,
+        (Math.random() - 0.5) * 0.05
+      );
+      // Zufällige Rotationsgeschwindigkeiten
+      child.userData.rotationSpeed = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.02,
+        (Math.random() - 0.5) * 0.02,
+        (Math.random() - 0.5) * 0.02
+      );
 
-    movingObjects.push(child);
+      movingObjects.push(child);
+    }
   });
 });
+
 
 function animate() {
   const time = clock.getElapsedTime();
@@ -164,20 +155,38 @@ function animate() {
   sphereGeometry.attributes.position.needsUpdate = true;
 
   movingObjects.forEach((obj) => {
-    // Position aktualisieren
+    // Aktualisiere die Position (Bewegung)
     obj.position.add(obj.userData.velocity);
 
-    // Rotation aktualisieren
+    // Aktualisiere die Rotation
     obj.rotation.x += obj.userData.rotationSpeed.x;
     obj.rotation.y += obj.userData.rotationSpeed.y;
     obj.rotation.z += obj.userData.rotationSpeed.z;
 
-    // Optional: Begrenze die Bewegung auf einen Bereich (z. B. zwischen -5 und 5)
-    ['x', 'y', 'z'].forEach(axis => {
-      if (obj.position[axis] > 5 || obj.position[axis] < -5) {
-        obj.userData.velocity[axis] = -obj.userData.velocity[axis];
+    // Deformation der Geometrie, sofern vorhanden
+    if (obj.geometry && obj.geometry.isBufferGeometry && obj.userData.basePositions) {
+      const positions = obj.geometry.attributes.position.array;
+      const basePositions = obj.userData.basePositions;
+      const count = obj.geometry.attributes.position.count;
+
+      for (let i = 0; i < count; i++) {
+        const ix = i * 3;
+        const ox = basePositions[ix];
+        const oy = basePositions[ix + 1];
+        const oz = basePositions[ix + 2];
+
+        // Berechne einen einfachen Noise-Effekt für jede Achse
+        const noiseX = Math.sin(time + ox * 2.0) * 0.1; // 0.1 = Amplitude der Deformation (anpassbar)
+        const noiseY = Math.cos(time + oy * 2.0) * 0.1;
+        const noiseZ = Math.sin(time + oz * 2.0) * 0.1;
+
+        // Neue Vertex-Position: Basisposition plus Noise
+        positions[ix]     = ox + noiseX;
+        positions[ix + 1] = oy + noiseY;
+        positions[ix + 2] = oz + noiseZ;
       }
-    });
+      obj.geometry.attributes.position.needsUpdate = true;
+    }
   });
 composer.render();
 }

@@ -75,21 +75,21 @@ loader.load('atmo.glb', (gltf) => {
   // Durchlaufe alle Kinder des Modells – in diesem Fall die 8 Objekte
   model.children.forEach((child) => {
     // Optional: Leichte Verschiebung der Startposition
-    child.position.x += (Math.random() - 0.5) * 2;
-    child.position.y += (Math.random() - 0.5) * 2;
-    child.position.z += (Math.random() - 0.5) * 2;
+    child.position.x += (Math.random() - 0.5) * 1.2;
+    child.position.y += (Math.random() - 0.5) * 1.0;
+    child.position.z += (Math.random() - 0.5) * 0.9;
 
     // Zufällige Geschwindigkeiten für die Position (Bewegungsrichtung)
     child.userData.velocity = new THREE.Vector3(
-      (Math.random() - 0.5) * 0.05,
-      (Math.random() - 0.5) * 0.05,
-      (Math.random() - 0.5) * 0.05
+      (Math.random() - 0.5) * 0.01,
+      (Math.random() - 0.5) * 0.02,
+      (Math.random() - 0.5) * 0.02
     );
 
     // Zufällige Rotationsgeschwindigkeiten
     child.userData.rotationSpeed = new THREE.Vector3(
       (Math.random() - 0.5) * 0.02,
-      (Math.random() - 0.5) * 0.02,
+      (Math.random() - 0.5) * 0.01,
       (Math.random() - 0.5) * 0.02
     );
 

@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
 
 let analyser = null; // wird später im RNBO-Setup initialisiert
 const clock = new THREE.Clock();

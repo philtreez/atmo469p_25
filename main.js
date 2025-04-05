@@ -54,11 +54,6 @@ const movingObjects = [];
 const loader = new GLTFLoader();
 loader.load('atmo.glb', (gltf) => {
   const model = gltf.scene;
-  model.scale.set(0.5, 0.5, 0.5);
-  model.rotation.x = Math.PI / 2;
-  model.rotation.y = Math.PI / 2;
-  model.rotation.z = Math.PI / 2;
-  model.position.set(0, 0, 0);
   model.traverse((child) => {
     if (child.isMesh) {
       child.material = new THREE.MeshStandardMaterial({
@@ -69,12 +64,6 @@ loader.load('atmo.glb', (gltf) => {
         opacity: 1,
         side: THREE.DoubleSide,
         depthWrite: false,
-
-        wireframe: true,
-        flatShading: false,
-        polygonOffset: true,
-        polygonOffsetFactor: 1,
-
         roughness: 0.1,
         metalness: 0.9  
       }); // Verwende das gleiche Material wie die organische Form

@@ -45,6 +45,39 @@ scene.add(organicMesh);
 // Speichere die ursprünglichen Vertex-Positionen
 const basePositions = new Float32Array(sphereGeometry.attributes.position.array.length);
 basePositions.set(sphereGeometry.attributes.position.array);
+// Array zum Speichern der beweglichen Objekte
+const movingObjects = [];
+
+// GLTF‑Loader zum Laden der .glb-Datei
+const loader = new GLTFLoader();
+loader.load('atmo.glb', (gltf) => {
+  const model = gltf.scene;
+  scene.add(model);
+
+  // Durchlaufe alle Kinder des Modells – in diesem Fall die 8 Objekte
+  model.children.forEach((child) => {
+    // Optional: Leichte Verschiebung der Startposition
+    child.position.x += (Math.random() - 0.5) * 2;
+    child.position.y += (Math.random() - 0.5) * 2;
+    child.position.z += (Math.random() - 0.5) * 2;
+
+    // Zufällige Geschwindigkeiten für die Position (Bewegungsrichtung)
+    child.userData.velocity = new THREE.Vector3(
+      (Math.random() - 0.5) * 0.05,
+      (Math.random() - 0.5) * 0.05,
+      (Math.random() - 0.5) * 0.05
+    );
+
+    // Zufällige Rotationsgeschwindigkeiten
+    child.userData.rotationSpeed = new THREE.Vector3(
+      (Math.random() - 0.5) * 0.02,
+      (Math.random() - 0.5) * 0.02,
+      (Math.random() - 0.5) * 0.02
+    );
+
+    movingObjects.push(child);
+  });
+});
 
 function animate() {
   const time = clock.getElapsedTime();
@@ -93,6 +126,22 @@ function animate() {
   }
   sphereGeometry.attributes.position.needsUpdate = true;
 
+  movingObjects.forEach((obj) => {
+    // Position aktualisieren
+    obj.position.add(obj.userData.velocity);
+
+    // Rotation aktualisieren
+    obj.rotation.x += obj.userData.rotationSpeed.x;
+    obj.rotation.y += obj.userData.rotationSpeed.y;
+    obj.rotation.z += obj.userData.rotationSpeed.z;
+
+    // Optional: Begrenze die Bewegung auf einen Bereich (z. B. zwischen -5 und 5)
+    ['x', 'y', 'z'].forEach(axis => {
+      if (obj.position[axis] > 5 || obj.position[axis] < -5) {
+        obj.userData.velocity[axis] = -obj.userData.velocity[axis];
+      }
+    });
+  });
   renderer.render(scene, camera);
 }
 

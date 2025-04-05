@@ -47,7 +47,7 @@ const material = new THREE.MeshStandardMaterial({
   opacity: 1,
   side: THREE.DoubleSide,
   depthWrite: false,
-  wireframe: true,
+  wireframe: false,
   flatShading: false,
   polygonOffset: true,
   polygonOffsetFactor: 1,

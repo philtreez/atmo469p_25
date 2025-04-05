@@ -22,8 +22,7 @@ document.body.appendChild(renderer.domElement);
 
 // Post-Processing-Effekte
 const composer = new EffectComposer(renderer);
-const renderPass = new RenderPass(scene, camera);
-composer.addPass(renderPass);
+
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
   0.9, // Stärke
@@ -32,6 +31,8 @@ const bloomPass = new UnrealBloomPass(
 );
 bloomPass.renderToScreen = true;
 composer.addPass(bloomPass);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
 // Fenstergröße anpassen
 
 // Licht hinzufügen und leicht animieren

@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 
@@ -29,7 +28,7 @@ const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
   0.5, // Stärke
   0.4, // Abstand
-  0.85 // Schwellenwert
+  0.15 // Schwellenwert
 );
 bloomPass.renderToScreen = true;
 composer.addPass(bloomPass);

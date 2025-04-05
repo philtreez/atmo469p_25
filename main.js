@@ -4,7 +4,6 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-
 let analyser = null; // wird später im RNBO-Setup initialisiert
 const clock = new THREE.Clock();
 
@@ -22,7 +21,6 @@ document.body.appendChild(renderer.domElement);
 
 // Post-Processing-Effekte
 const composer = new EffectComposer(renderer);
-
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
   0.9, // Stärke
@@ -33,7 +31,6 @@ bloomPass.renderToScreen = true;
 composer.addPass(bloomPass);
 const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
-// Fenstergröße anpassen
 
 // Licht hinzufügen und leicht animieren
 const light = new THREE.PointLight(0xffffff, 100);
@@ -44,18 +41,16 @@ scene.add(light);
 const sphereGeometry = new THREE.SphereGeometry(2, 128, 128);
 const material = new THREE.MeshStandardMaterial({
   color: 0x00ff8c,
-    emissive: 0x00ff00,
-    emissiveIntensity: 0.05,
-    transparent: true,
-    opacity: 1,
-    side: THREE.DoubleSide,
-    depthWrite: false,
-
-    wireframe: true,
-    flatShading: false,
-    polygonOffset: true,
-    polygonOffsetFactor: 1,
-
+  emissive: 0x00ff00,
+  emissiveIntensity: 0.05,
+  transparent: true,
+  opacity: 1,
+  side: THREE.DoubleSide,
+  depthWrite: false,
+  wireframe: true,
+  flatShading: false,
+  polygonOffset: true,
+  polygonOffsetFactor: 1,
   roughness: 0.4,
   metalness: 0.3
 });
@@ -65,6 +60,7 @@ scene.add(organicMesh);
 // Speichere die ursprünglichen Vertex-Positionen
 const basePositions = new Float32Array(sphereGeometry.attributes.position.array.length);
 basePositions.set(sphereGeometry.attributes.position.array);
+
 // Array zum Speichern der beweglichen Objekte
 const movingObjects = [];
 
@@ -106,7 +102,6 @@ loader.load('models/your_model.glb', (gltf) => {
   });
 });
 
-
 function animate() {
   const time = clock.getElapsedTime();
 
@@ -116,16 +111,25 @@ function animate() {
     analyser.getByteFrequencyData(dataArray);
     const sum = dataArray.reduce((a, b) => a + b, 0);
     audioAmplitude = (sum / dataArray.length) / 256; // Normiert zwischen 0 und 1
+    // In der Animationsschleife, nach der Berechnung von "audioAmplitude" und "time"
+const hue = (time * 0.1 + audioAmplitude * 0.5) % 1; // Basis-Hue, der sich mit der Zeit und dem Audiopegel ändert
+// Sättigung und Helligkeit werden zusätzlich mit dem Audiopegel moduliert
+const saturation = 0.6 + audioAmplitude * 0.4; // Sättigung erhöht sich bei höherem Audiopegel
+const lightness = 0.5 + audioAmplitude * 0.2;  // Leichtigkeit ebenfalls etwas ansteigend
+
+organicMesh.material.color.setHSL(hue, saturation, lightness);
+organicMesh.material.emissive.setHSL((hue + 0.5) % 1, saturation * 0.8, lightness * 0.6);
+
   }
 
+  
   // Lichtposition animieren (Kreisbewegung mit leichter vertikaler Schwankung)
   const radius = 5;
   light.position.x = radius * Math.cos(time * 0.2);
   light.position.z = radius * Math.sin(time * 0.15);
   light.position.y = 2 + Math.sin(time * 0.8);
 
-  // Komplexe Deformation der Geometrie:
-  // Hier kombinieren wir mehrere Noise-Funktionen, um einen abwechslungsreicheren Effekt zu erzielen.
+  // Komplexe Deformation der Kugel-Geometrie:
   const positions = sphereGeometry.attributes.position.array;
   const count = sphereGeometry.attributes.position.count;
   for (let i = 0; i < count; i++) {
@@ -154,11 +158,17 @@ function animate() {
   }
   sphereGeometry.attributes.position.needsUpdate = true;
 
+  // Aktualisiere die Farbe der Kugel: Wir nutzen HSL, um einen fließenden Farbwechsel zu erzeugen
+  const hue = (time * 0.1) % 1;
+  organicMesh.material.color.setHSL(hue, 0.6, 0.5);
+  organicMesh.material.emissive.setHSL((hue + 0.5) % 1, 0.5, 0.2);
+
+  // Animation für die geladenen Objekte
   movingObjects.forEach((obj) => {
-    // Aktualisiere die Position (Bewegung)
+    // Position aktualisieren (Bewegung)
     obj.position.add(obj.userData.velocity);
 
-    // Aktualisiere die Rotation
+    // Rotation aktualisieren
     obj.rotation.x += obj.userData.rotationSpeed.x;
     obj.rotation.y += obj.userData.rotationSpeed.y;
     obj.rotation.z += obj.userData.rotationSpeed.z;
@@ -175,12 +185,11 @@ function animate() {
         const oy = basePositions[ix + 1];
         const oz = basePositions[ix + 2];
 
-        // Berechne einen einfachen Noise-Effekt für jede Achse
-        const noiseX = Math.sin(time + ox * 2.0) * 0.1; // 0.1 = Amplitude der Deformation (anpassbar)
+        // Einfacher Noise-Effekt pro Achse
+        const noiseX = Math.sin(time + ox * 2.0) * 0.1;
         const noiseY = Math.cos(time + oy * 2.0) * 0.1;
         const noiseZ = Math.sin(time + oz * 2.0) * 0.1;
 
-        // Neue Vertex-Position: Basisposition plus Noise
         positions[ix]     = ox + noiseX;
         positions[ix + 1] = oy + noiseY;
         positions[ix + 2] = oz + noiseZ;
@@ -188,7 +197,8 @@ function animate() {
       obj.geometry.attributes.position.needsUpdate = true;
     }
   });
-composer.render();
+
+  composer.render();
 }
 
 // RNBO-Setup: Lädt den Patch und erstellt einen Audio-Analyser, der die Geometrie beeinflusst.

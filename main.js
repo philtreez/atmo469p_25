@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 let analyser = null; // wird später im RNBO-Setup initialisiert
 const clock = new THREE.Clock();
@@ -60,6 +59,7 @@ loader.load('atmo.glb', (gltf) => {
         color: 0x00ff00,
         emissive: 0x00ff00,
         emissiveIntensity: 0.05,
+        wireframe: true,
         transparent: true,
         opacity: 1,
         side: THREE.DoubleSide,

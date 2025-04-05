@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
 
 let analyser = null; // wird später im RNBO-Setup initialisiert
 const clock = new THREE.Clock();
@@ -16,6 +21,20 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(animate);
 document.body.appendChild(renderer.domElement);
 
+// Post-Processing-Effekte
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+const bloomPass = new UnrealBloomPass(
+  new THREE.Vector2(window.innerWidth, window.innerHeight),
+  0.5, // Stärke
+  0.4, // Abstand
+  0.85 // Schwellenwert
+);
+bloomPass.renderToScreen = true;
+composer.addPass(bloomPass);
+// Fenstergröße anpassen
+
 // Licht hinzufügen und leicht animieren
 const light = new THREE.PointLight(0xffffff, 100);
 light.position.set(5, 8, 5);
@@ -24,7 +43,7 @@ scene.add(light);
 // Erstelle eine Kugel-Geometrie als Basis für die organische Form
 const sphereGeometry = new THREE.SphereGeometry(2, 128, 128);
 const material = new THREE.MeshStandardMaterial({
-  color: 0x00ff00,
+  color: 0x00ff8c,
     emissive: 0x00ff00,
     emissiveIntensity: 0.05,
     transparent: true,
@@ -56,7 +75,7 @@ loader.load('atmo.glb', (gltf) => {
   model.traverse((child) => {
     if (child.isMesh) {
       child.material = new THREE.MeshStandardMaterial({
-        color: 0x00ff00,
+        color: 0x00ff8c,
         emissive: 0x00ff00,
         emissiveIntensity: 0.05,
         wireframe: true,
@@ -160,7 +179,7 @@ function animate() {
       }
     });
   });
-  renderer.render(scene, camera);
+composer.render();
 }
 
 // RNBO-Setup: Lädt den Patch und erstellt einen Audio-Analyser, der die Geometrie beeinflusst.

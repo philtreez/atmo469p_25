@@ -26,9 +26,9 @@ const renderPass = new RenderPass(scene, camera);
 composer.addPass(renderPass);
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
-  0.5, // Stärke
+  0.9, // Stärke
   0.4, // Abstand
-  0.15 // Schwellenwert
+  0.05 // Schwellenwert
 );
 bloomPass.renderToScreen = true;
 composer.addPass(bloomPass);

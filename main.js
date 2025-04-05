@@ -98,7 +98,7 @@ function animate() {
 
 // RNBO-Setup: Lädt den Patch und erstellt einen Audio-Analyser, der die Geometrie beeinflusst.
 async function setup() {
-  const patchExportURL = "export/patch.export.json";
+  const patchExportURL = "patch.export.json";
 
   // Erstelle AudioContext
   const WAContext = window.AudioContext || window.webkitAudioContext;

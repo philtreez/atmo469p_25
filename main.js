@@ -51,7 +51,7 @@ const material = new THREE.MeshStandardMaterial({
   flatShading: false,
   polygonOffset: true,
   polygonOffsetFactor: 1,
-  roughness: 0.4,
+  roughness: 0.1,
   metalness: 0.3
 });
 const organicMesh = new THREE.Mesh(sphereGeometry, material);

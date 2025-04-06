@@ -42,7 +42,7 @@ const sphereGeometry = new THREE.SphereGeometry(2, 128, 128);
 const material = new THREE.MeshStandardMaterial({
   color: 0x00ff8c,
   emissive: 0x00ff00,
-  emissiveIntensity: 0.05,
+  emissiveIntensity: 0.1,
   transparent: true,
   opacity: 1,
   side: THREE.DoubleSide,

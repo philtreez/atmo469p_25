@@ -1,0 +1,58 @@
+[
+  {
+    "id": "trum",
+    "file": "media/treihe_trums.wav"
+  },
+  {
+    "id": "b1",
+    "file": "media/1.wav"
+  },
+  {
+    "id": "lea",
+    "file": "media/treihe_leat.wav"
+  },
+  {
+    "id": "bassr",
+    "file": "media/treihe_bass.wav"
+  },
+  {
+    "id": "b_kick1_wav",
+    "file": "media/kick1.wav"
+  },
+  {
+    "id": "b_kick4_wav",
+    "file": "media/kick4.wav"
+  },
+  {
+    "id": "b_snare_wav",
+    "file": "media/snare.wav"
+  },
+  {
+    "id": "b_rim_wav",
+    "file": "media/rim.wav"
+  },
+  {
+    "id": "b_clap_wav",
+    "file": "media/clap.wav"
+  },
+  {
+    "id": "b_hat1_wav",
+    "file": "media/hat1.wav"
+  },
+  {
+    "id": "b69",
+    "file": "media/69.wav"
+  },
+  {
+    "id": "trtr",
+    "file": "media/trtr.wav"
+  },
+  {
+    "id": "tr1",
+    "file": "media/treih3.wav"
+  },
+  {
+    "id": "b8",
+    "file": "media/8.wav"
+  }
+]

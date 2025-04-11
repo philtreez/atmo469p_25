@@ -3,8 +3,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass.js';
 
-let analyser = null; // wird später im RNBO‑Setup initialisiert
+
+let analyserVisual1 = null; // für out~3
+let analyserVisual2 = null; // für out~4
 const clock = new THREE.Clock();
 
 // Szene, Kamera und Renderer initialisieren
@@ -12,7 +15,7 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
   75, window.innerWidth / window.innerHeight, 0.1, 1000
 );
-camera.position.z = 10;
+camera.position.z = 6;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -22,6 +25,11 @@ document.body.appendChild(renderer.domElement);
 // Post-Processing
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
+
+const afterimagePass = new AfterimagePass();
+afterimagePass.uniforms["damp"].value = 0.68;
+composer.addPass(afterimagePass);
+
 const bloomPass = new UnrealBloomPass(
   new THREE.Vector2(window.innerWidth, window.innerHeight),
   3.9,
@@ -36,46 +44,58 @@ const light = new THREE.PointLight(0xffffff, 50);
 light.position.set(5, 8, 5);
 scene.add(light);
 
-// Vertex-Shader – berechnet Normale und Weltposition für specular Highlights
+// Vertex-Shader – berechnet Normale & Weltposition
 const vertexShader = `
-  uniform float time;
-  uniform float audioAmplitude;
-  uniform float deformMultiplier;
-  varying vec2 vUv;
-  varying vec3 vNormal;
-  varying vec3 vWorldPosition;
+uniform float time;
+uniform float audioAmplitude;
+uniform float audioAmplitude2; // neuer Uniform für die zusätzliche Audio-Spur
+uniform float deformMultiplier;
+uniform float edgyMultiplier;  // neuer Uniform für die Stärke der eckigen Deformation
+varying vec2 vUv;
+varying vec3 vNormal;
+varying vec3 vWorldPosition;
+
+void main() {
+  vUv = uv;
+  vNormal = normalize(normalMatrix * normal);
+  vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
   
-  void main() {
-    vUv = uv;
-    vNormal = normalize(normalMatrix * normal);
-    vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
-    
-    vec3 pos = position;
-    
-    float n1 = sin(time * 1.0 + pos.x * 10.0) * cos(time * 1.0 + pos.y * 15.0);
-    float n2 = sin(time * 1.5 + pos.z * 8.0) * cos(time * 1.25 + pos.x * 12.0);
-    float n3 = sin(time * 0.5 + pos.y * 5.0) * cos(time * 2.0 + pos.z * 11.0);
-    float combinedNoise = (n1 + n2 + n3) / 3.0;
-    
-    vec3 noiseVec;
-    noiseVec.x = sin(time * 1.0 + pos.y * 7.0) * cos(time * 1.0 + pos.z * 7.0);
-    noiseVec.y = sin(time * 1.2 + pos.z * 6.0) * cos(time * 1.2 + pos.x * 6.0);
-    noiseVec.z = sin(time * 1.4 + pos.x * 8.0) * cos(time * 1.4 + pos.y * 8.0);
-    
-    vec3 offset = normal * combinedNoise * audioAmplitude * 0.3 * deformMultiplier +
-                  noiseVec * audioAmplitude * 0.15 * deformMultiplier;
-    
-    pos += offset;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-  }
+  vec3 pos = position;
+  
+  // Weiche Deformation (wie bisher)
+  float n1 = sin(time * 1.0 + pos.x * 10.0) * cos(time * 1.0 + pos.y * 15.0);
+  float n2 = sin(time * 1.5 + pos.z * 8.0) * cos(time * 1.25 + pos.x * 12.0);
+  float n3 = sin(time * 0.5 + pos.y * 5.0) * cos(time * 2.0 + pos.z * 11.0);
+  float combinedNoise = (n1 + n2 + n3) / 3.0;
+  
+  vec3 noiseVec;
+  noiseVec.x = sin(time * 1.0 + pos.y * 7.0) * cos(time * 1.0 + pos.z * 7.0);
+  noiseVec.y = sin(time * 1.2 + pos.z * 6.0) * cos(time * 1.2 + pos.x * 6.0);
+  noiseVec.z = sin(time * 1.4 + pos.x * 8.0) * cos(time * 1.4 + pos.y * 8.0);
+  
+  vec3 offset = normal * combinedNoise * audioAmplitude * 0.3 * deformMultiplier +
+                noiseVec * audioAmplitude * 0.15 * deformMultiplier;
+  
+  // Neue, eckigere Deformation:
+  vec3 edgeOffset = vec3(
+    sign(sin(pos.x * 30.0 + time * 2.0)),
+    sign(sin(pos.y * 30.0 + time * 2.0)),
+    sign(sin(pos.z * 30.0 + time * 2.0))
+  ) * audioAmplitude2 * edgyMultiplier * 0.5;
+  
+  pos += offset + edgeOffset;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+}
 `;
 
-// Fragment-Shader – berechnet Basisfarbe und specular Highlight (ohne eigene Deklaration von cameraPosition)
+// Fragment-Shader – berechnet Basisfarbe & specular Highlight
 const fragmentShader = `
   uniform float time;
   uniform float audioAmplitude;
+  uniform float audioAmplitude2;
   uniform float colorOffset;
   uniform vec3 lightDirection;
+  uniform vec3 uCameraPosition;
   varying vec2 vUv;
   varying vec3 vNormal;
   varying vec3 vWorldPosition;
@@ -101,32 +121,31 @@ const fragmentShader = `
       
       vec3 baseColor = hsl2rgb(vec3(finalHue, finalSat, finalLight));
       
-      // Specular Highlight-Berechnung: cameraPosition ist automatisch vorhanden
+      // Specular Highlight-Berechnung
       vec3 N = normalize(vNormal);
       vec3 L = normalize(lightDirection);
-      vec3 V = normalize(cameraPosition - vWorldPosition);
+      vec3 V = normalize(uCameraPosition - vWorldPosition);
       vec3 H = normalize(L + V);
       float spec = pow(max(dot(N, H), 0.0), 64.0);
-      vec3 specular = vec3(1.0) * spec;
+      // Moduliere specular mit audioAmplitude2 für zusätzlichen Effekt
+      vec3 specular = vec3(1.0) * spec * (1.0 + audioAmplitude2);
       
-      // Mische die Basisfarbe und das specular Highlight zu einem metallischen Look
+      // Mische Basisfarbe & specular Highlight
       vec3 finalColor = mix(baseColor, specular, 0.5);
       gl_FragColor = vec4(finalColor, 1.0);
   }
 `;
 
-// Array für die geladenen GLB‑Objekte
+// Arrays für geladene Objekte und Animationen
 const movingObjects = [];
-// Array für AnimationMixer (falls Animationen im GLB vorhanden sind)
 const mixers = [];
 
-// GLTF-Loader zum Laden des .glb-Modells
+// GLTF-Loader: Lade das GLB-Modell
 const loader = new GLTFLoader();
-loader.load('69p.glb', (gltf) => {
+loader.load('tmo.glb', (gltf) => {
   const model = gltf.scene;
   scene.add(model);
   
-  // Animationen abspielen, falls vorhanden
   if (gltf.animations && gltf.animations.length > 0) {
     const mixer = new THREE.AnimationMixer(model);
     gltf.animations.forEach((clip) => {
@@ -135,41 +154,38 @@ loader.load('69p.glb', (gltf) => {
     mixers.push(mixer);
   }
   
-  // Für jedes Mesh im Modell: Material ersetzen und Effekte setzen
   model.traverse((child) => {
     if (child.isMesh) {
-      // Falls Skinning genutzt wird, setze explizit den Wert
       const useSkinning = child.skinning ? true : false;
       
-      // (Optional) Ursprüngliche Vertex-Daten speichern
       if (child.geometry && child.geometry.isBufferGeometry) {
         const basePos = new Float32Array(child.geometry.attributes.position.array.length);
         basePos.set(child.geometry.attributes.position.array);
         child.userData.basePositions = basePos;
       }
       
-      // Individuelle Parameter
-      const deformMultiplier = 0.5 + Math.random() * 0.5;
-      const colorOffset = Math.random();
+      const deformMultiplier = 0.5 + Math.random() * 0.2;
+      const colorOffset = Math.random() * 2 * Math.PI;
       
       child.material = new THREE.ShaderMaterial({
         uniforms: {
           time: { value: 0 },
           audioAmplitude: { value: 0 },
+          audioAmplitude2: { value: 0 }, // neuer Uniform
           deformMultiplier: { value: deformMultiplier },
+          edgyMultiplier: { value: 0.3 }, // Beispielwert – hier kannst du den gewünschten Grad an "Eckigkeit" einstellen
           colorOffset: { value: colorOffset },
-          lightDirection: { value: new THREE.Vector3(5, 8, 5).normalize() }
-          // cameraPosition wird automatisch von Three.js gesetzt
+          lightDirection: { value: new THREE.Vector3(5, 8, 5).normalize() },
+          uCameraPosition: { value: camera.position }
         },
         vertexShader,
         fragmentShader,
         side: THREE.DoubleSide,
         transparent: true,
-        wireframe: true,
-        skinning: useSkinning
+        wireframe: false
       });
       
-      // Minimale globale Verschiebungen
+      
       child.position.x += (Math.random() - 0.5) * 0.2;
       child.position.y += (Math.random() - 0.5) * 0.2;
       child.position.z += (Math.random() - 0.5) * 0.2;
@@ -195,15 +211,22 @@ function animate() {
   
   mixers.forEach((mixer) => mixer.update(delta));
   
-  let audioAmplitude = 0;
-  if (analyser) {
-    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-    analyser.getByteFrequencyData(dataArray);
-    const sum = dataArray.reduce((a, b) => a + b, 0);
-    audioAmplitude = (sum / dataArray.length) / 256;
+  let audioAmp1 = 0;
+  if (analyserVisual1) {
+    const dataArray1 = new Uint8Array(analyserVisual1.frequencyBinCount);
+    analyserVisual1.getByteFrequencyData(dataArray1);
+    const sum1 = dataArray1.reduce((a, b) => a + b, 0);
+    audioAmp1 = (sum1 / dataArray1.length) / 256;
   }
   
-  // Lichtanimation
+  let audioAmp2 = 0;
+  if (analyserVisual2) {
+    const dataArray2 = new Uint8Array(analyserVisual2.frequencyBinCount);
+    analyserVisual2.getByteFrequencyData(dataArray2);
+    const sum2 = dataArray2.reduce((a, b) => a + b, 0);
+    audioAmp2 = (sum2 / dataArray2.length) / 256;
+  }
+  
   const radius = 5;
   light.position.x = radius * Math.cos(time * 0.2);
   light.position.z = radius * Math.sin(time * 0.15);
@@ -216,7 +239,9 @@ function animate() {
     obj.rotation.z += obj.userData.rotationSpeed.z;
     
     obj.material.uniforms.time.value = time;
-    obj.material.uniforms.audioAmplitude.value = audioAmplitude;
+    obj.material.uniforms.audioAmplitude.value = audioAmp1;
+    obj.material.uniforms.audioAmplitude2.value = audioAmp2;
+    obj.material.uniforms.uCameraPosition.value.copy(camera.position);
   });
   
   composer.render();
@@ -235,7 +260,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// RNBO-Setup: Lädt den Patch und erstellt einen Audio-Analyser
+// RNBO-Setup: Lade den Patch und erstelle die Audio-Analyser
 async function setup() {
   const patchExportURL = "patch.export.json";
   const WAContext = window.AudioContext || window.webkitAudioContext;
@@ -264,10 +289,18 @@ async function setup() {
   }
   
   device.node.disconnect();
-  analyser = context.createAnalyser();
-  analyser.fftSize = 256;
-  device.node.connect(analyser);
-  analyser.connect(outputNode);
+  const splitter = context.createChannelSplitter(4);
+  device.node.connect(splitter);
+  // Kanäle 0 und 1 gehen an den Audioausgang
+  splitter.connect(outputNode, 0);
+  splitter.connect(outputNode, 1);
+  // Kanäle 2 und 3 für Visuals:
+  analyserVisual1 = context.createAnalyser();
+  analyserVisual2 = context.createAnalyser();
+  analyserVisual1.fftSize = 256;
+  analyserVisual2.fftSize = 256;
+  splitter.connect(analyserVisual1, 2);
+  splitter.connect(analyserVisual2, 3);
   
   document.body.onclick = () => {
     context.resume();

@@ -262,7 +262,7 @@ document.addEventListener('visibilitychange', () => {
 
 // RNBO-Setup: Lade den Patch und erstelle die Audio-Analyser
 async function setup() {
-  const patchExportURL = "patch.export.json";
+  const patchExportURL = "p1/patch.export.json";
   const WAContext = window.AudioContext || window.webkitAudioContext;
   const context = new WAContext();
   const outputNode = context.createGain();
@@ -299,8 +299,8 @@ async function setup() {
   analyserVisual2 = context.createAnalyser();
   analyserVisual1.fftSize = 256;
   analyserVisual2.fftSize = 256;
-  splitter.connect(analyserVisual1, 2);
-  splitter.connect(analyserVisual2, 3);
+  splitter.connect(analyserVisual1, 0);
+  splitter.connect(analyserVisual2, 1);
   
   document.body.onclick = () => {
     context.resume();

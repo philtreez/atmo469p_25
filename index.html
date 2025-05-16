@@ -1,13 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>ATMO469P</title>
-    <style>
-      body { margin: 0; }
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Random Main</title>
+  <style>
+    body { margin: 0;
+    background-color: #000;}
     </style>
-  </head>
-  <body>
-    <script type="module" src="/main3.js"></script>
-  </body>
+    <script>
+  const scripts = ['main.js', 'main2.js', 'main3.js'];
+  const choice  = scripts[Math.floor(Math.random() * scripts.length)];
+  const s = document.createElement('script');
+  s.type = 'module';         // hier das Modul-Flag
+  s.src  = choice;
+  s.defer = true;
+  document.head.appendChild(s);
+  console.log('Lade Modul:', choice);
+</script>
+</head>
+<body>
+</body>
 </html>

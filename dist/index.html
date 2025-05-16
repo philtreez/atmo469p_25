@@ -1,12 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PT</title>
-  <script type="module" crossorigin src="/assets/index-Bsgg0_dP.js"></script>
+  <meta charset="utf-8">
+  <title>Random Main</title>
+  <style>
+    body { margin: 0;
+    background-color: #000;}
+    </style>
+    <script>
+  const scripts = ['/src/main.js', '/src/main2.js', '/src/main3.js'];
+  const choice  = scripts[Math.floor(Math.random() * scripts.length)];
+  const s = document.createElement('script');
+  s.type = 'module';         // hier das Modul-Flag
+  s.src  = choice;
+  s.defer = true;
+  document.head.appendChild(s);
+  console.log('Lade Modul:', choice);
+</script>
 </head>
 <body>
-  <div id="root"></div>
 </body>
 </html>

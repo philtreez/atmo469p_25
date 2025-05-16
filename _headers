@@ -3,3 +3,6 @@
 
   /public/*
   Access-Control-Allow-Origin: *
+
+  /src/*
+  Access-Control-Allow-Origin: *

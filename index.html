@@ -1,19 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PT</title>
-</head>
-<body style="margin: 0;">
-  
-  <div id="root"></div>
-  <script>
-    const files = ['main.js', 'main1.js', 'main3.js'];
-    const s = document.createElement('script');
-    s.type = 'module';
-    s.src  = `./${files[Math.floor(Math.random() * files.length)]}`;
-    document.head.appendChild(s);
-  </script>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Random-Entry-Demo</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+
+    <!-- Zufälliger Einstieg -->
+    <script type="module">
+      // alle Dateien, die main*.js heißen, einsammeln
+      const modules = import.meta.glob('./main*.js');
+
+      // Schlüssel (= Pfadnamen) in ein Array umwandeln
+      const keys = Object.keys(modules);
+
+      // Zufällig einen Pfad wählen
+      const pick = keys[Math.floor(Math.random() * keys.length)];
+
+      // Gewähltes Modul laden & ausführen
+      modules[pick]().catch(console.error);
+    </script>
   </body>
 </html>
